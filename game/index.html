@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#f2eee5">
+<meta name="robots" content="noindex,nofollow">
+<title>11:11 — LeUltimeParoleFamose</title>
+<meta name="description" content="11:11. L U P F. Undici cadute. Un piccolo gioco di LeUltimeParoleFamose.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="11:11 — Il mini gioco di LeUltimeParoleFamose">
+<meta property="og:description" content="L U P F. Tocca. Lascia cadere. 11 pezzi.">
+<meta property="og:image" content="https://epk-leultimeparolefamose-1111.pages.dev/assets/cover.webp">
+<meta property="og:url" content="https://lupf-1111-game.pages.dev/">
+<style>
+:root{--ink:#172b35;--cream:#f2eee5;--white:#fcfaf5;--orange:#ed6741;--pink:#e449a0;--teal:#1a676a}
+*{box-sizing:border-box}html,body{height:100%;width:100%;margin:0;overscroll-behavior:none}body{background:var(--cream);color:var(--ink);font-family:Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased}
+main{width:100%;min-height:100svh;display:grid;place-items:center;padding:12px;overflow:hidden}
+.game{width:min(92vw,390px,calc(88svh * .611111));position:relative;aspect-ratio:11/18;max-height:88svh;touch-action:none;overflow:hidden;background:var(--white)}
+canvas{display:block;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer}
+.mini{position:absolute;top:12px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;font-weight:900;letter-spacing:-1px;font-size:15px;z-index:3}.mini .count{font-size:12px;letter-spacing:1px}.mini.hidden{display:none}
+.overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:24px;z-index:5;background:var(--cream);padding:22px;transition:opacity .2s}.overlay.hidden{display:none}
+.face{width:min(70%,240px);aspect-ratio:1;position:relative;border:0;padding:0;cursor:pointer;border-radius:50%;background:none;box-shadow:0 14px 38px #172b3538;overflow:visible;-webkit-tap-highlight-color:transparent;animation:float 3.4s ease-in-out infinite}
+.face img{display:block;width:100%;height:100%;object-fit:cover;border-radius:50%;border:5px solid var(--orange)}
+.face::after{content:'▶';position:absolute;right:-9px;bottom:4px;border-radius:50%;width:54px;height:54px;background:var(--orange);color:var(--cream);border:4px solid var(--cream);display:grid;place-items:center;font-size:23px;line-height:1;text-indent:3px;box-shadow:0 3px 11px #0003}
+.face:focus-visible{outline:3px solid var(--pink);outline-offset:8px}
+.end-head{font-size:clamp(64px,17vw,99px);line-height:.85;font-weight:900;letter-spacing:-6px;color:var(--orange)}
+.end-sub{font-size:12px;letter-spacing:2.5px;font-weight:900;margin:0}
+.again{background:var(--ink);color:var(--cream);border:0;padding:16px 27px;border-radius:99px;letter-spacing:1.5px;font-size:12px;font-weight:800;cursor:pointer}
+.listen{font-size:11px;font-weight:800;letter-spacing:1.3px;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:4px}
+@keyframes float{50%{transform:translateY(-6px)}}@media(prefers-reduced-motion:reduce){.face{animation:none}}
+@media(max-height:600px){.face{width:min(55%,165px)}.overlay{gap:15px}.end-head{font-size:60px}}
+</style>
+</head>
+<body>
+<main>
+  <section class="game" id="game" aria-label="Gioco 11:11">
+    <canvas id="board" width="330" height="540" aria-label="Tocca una posizione per far cadere la lettera"></canvas>
+    <div class="mini hidden" id="mini"><span>11:11</span><span class="count" id="count">00 / 11</span></div>
+    <div class="overlay" id="intro"><button class="face" id="play" aria-label="Gioca"><img src="vale-mini.webp" alt="Volto illustrato di LeUltimeParoleFamose"></button></div>
+    <div class="overlay hidden" id="finish"><div class="end-head">11:11</div><p class="end-sub" id="message">HAI FATTO 11 PEZZI</p><button class="again" id="again">RIGIOCA ↻</button><a class="listen" href="https://epk-leultimeparolefamose-1111.pages.dev/" target="_blank" rel="noopener">SCOPRI IL SINGOLO ↗</a></div>
+  </section>
+</main>
+<script>
+(()=>{
+'use strict';
+const C=11,R=18,S=30,COLORS={L:'#ed6741',U:'#1a676a',P:'#e449a0',F:'#172b35','11':'#c89c5f'};
+const SHAPES={L:['100','100','111'],U:['101','101','111'],P:['110','101','110','100'],F:['111','100','110'],'11':['101','101','101']};
+const cv=document.getElementById('board'),ctx=cv.getContext('2d');
+const intro=document.getElementById('intro'),finish=document.getElementById('finish'),mini=document.getElementById('mini');
+const progress=document.getElementById('count');
+let map,now,bag=[],count=0,lines=0,phase='intro',animation=null,token=0,startTouch=null;
+const matrix=k=>SHAPES[k].map(row=>Array.from(row,ch=>ch==='1'?k:null));
+const newMap=()=>Array.from({length:R},()=>Array(C).fill(null));
+function next(){if(!bag.length){bag=Object.keys(SHAPES);for(let i=bag.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[bag[i],bag[j]]=[bag[j],bag[i]];}}return bag.pop();}
+function blocked(m,x,y){for(let r=0;r<m.length;r++)for(let c=0;c<m[r].length;c++){if(!m[r][c])continue;const X=x+c,Y=y+r;if(X<0||X>=C||Y>=R||(Y>=0&&map[Y][X]))return true;}return false;}
+function createPiece(){const k=next(),m=matrix(k);now={k,m,x:Math.floor((C-m[0].length)/2),y:0};if(blocked(m,now.x,now.y))stop(false);}
+function paintBlock(x,y,k,alpha=1){if(y<0||y>=R)return;ctx.globalAlpha=alpha;ctx.fillStyle=COLORS[k];ctx.fillRect(x*S+1,y*S+1,S-2,S-2);ctx.globalAlpha=1;}
+function paintShape(m,x,y,alpha=1){m.forEach((row,r)=>row.forEach((k,c)=>{if(k)paintBlock(x+c,y+r,k,alpha)}));}
+function draw(){ctx.fillStyle='#fcfaf5';ctx.fillRect(0,0,330,540);ctx.strokeStyle='rgba(23,43,53,.065)';ctx.lineWidth=1;
+ for(let x=0;x<=C;x++){ctx.beginPath();ctx.moveTo(x*S+.5,0);ctx.lineTo(x*S+.5,540);ctx.stroke()}
+ for(let y=0;y<=R;y++){ctx.beginPath();ctx.moveTo(0,y*S+.5);ctx.lineTo(330,y*S+.5);ctx.stroke()}
+ map.forEach((row,y)=>row.forEach((k,x)=>{if(k)paintBlock(x,y,k)}));
+ if(now&&phase==='play'){let gy=now.y;while(!blocked(now.m,now.x,gy+1))gy++;paintShape(now.m,now.x,gy,.16);paintShape(now.m,now.x,now.y)}
+}
+function begin(){token++;map=newMap();bag=[];count=0;lines=0;now=null;phase='play';animation=null;intro.classList.add('hidden');finish.classList.add('hidden');mini.classList.remove('hidden');progress.textContent='00 / 11';createPiece();draw();}
+function lock(){now.m.forEach((row,r)=>row.forEach((k,c)=>{if(k)map[now.y+r][now.x+c]=k}));count++;
+ for(let y=R-1;y>=0;y--){if(map[y].every(Boolean)){map.splice(y,1);map.unshift(Array(C).fill(null));lines++;y++;}}
+ progress.textContent=String(count).padStart(2,'0')+' / 11';
+ if(count>=11){stop(true);return;}
+ createPiece();draw();}
+function stop(win){phase='end';now=null;mini.classList.add('hidden');document.getElementById('message').textContent=win?'11 PEZZI. UNA SOLA STORIA.':'RIPROVIAMO?';finish.classList.remove('hidden');draw();}
+function dropAt(column){if(phase!=='play'||animation)return;const m=now.m;const width=m[0].length;now.x=Math.max(0,Math.min(C-width,Math.round(column-(width-1)/2)));
+ if(blocked(m,now.x,now.y)){stop(false);return;}
+ let target=0;while(!blocked(m,now.x,target+1))target++;
+ const current=++token;const start=performance.now();const duration=Math.max(190,Math.min(440,240+target*8));
+ animation=true;
+ function frame(ts){if(current!==token||phase!=='play')return;const p=Math.min(1,(ts-start)/duration);now.y=Math.floor(target*(1-Math.pow(1-p,2.5)));draw();if(p<1)requestAnimationFrame(frame);else{now.y=target;animation=null;lock()}}
+ requestAnimationFrame(frame);
+}
+function closeGame(){if(phase==='intro')return;token++;animation=null;phase='intro';now=null;mini.classList.add('hidden');finish.classList.add('hidden');intro.classList.remove('hidden');draw();if(window.parent!==window)window.parent.postMessage({type:'lupf-1111-close'},'*');}
+function position(e){let rect=cv.getBoundingClientRect();return{x:Math.max(0,Math.min(rect.width,e.clientX-rect.left)),y:e.clientY-rect.top,w:rect.width,h:rect.height};}
+cv.addEventListener('pointerdown',e=>{if(phase!=='play')return;startTouch={id:e.pointerId,...position(e)};cv.setPointerCapture(e.pointerId);});
+cv.addEventListener('pointerup',e=>{if(phase!=='play'||!startTouch||e.pointerId!==startTouch.id)return;let p=position(e),dy=p.y-startTouch.y;startTouch=null;
+ if(dy < -Math.max(110,p.h*.25)){closeGame();return;}
+ dropAt(p.x/p.w*C-.5);
+});
+cv.addEventListener('pointercancel',()=>{startTouch=null});
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+document.getElementById('play').addEventListener('click',begin);
+document.getElementById('again').addEventListener('click',begin);
+map=newMap();draw();
+})();
+</script>
+</body>
+</html>
