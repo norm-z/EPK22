@@ -83,7 +83,7 @@ const u=new URL(request.url),path=u.pathname;
 if(path==='/mimosa'||path==='/mimosa/')return serve(HTML,'text/html; charset=utf-8');
 if(path==='/mimosa/sw.js')return serve(SW,'application/javascript; charset=utf-8');
 if(path==='/mimosa/icon-192.png'||path==='/mimosa/icon-512.png'){const data=path.endsWith('192.png')?ICON192_PNG:ICON512_PNG;const bytes=Uint8Array.from(atob(data),c=>c.charCodeAt(0));return new Response(bytes,{headers:{'content-type':'image/png','cache-control':'public,max-age=86400'}})}
-if(path==='/mimosa/icon.svg')return serve(ICON,'image/svg+xml');
+if(path==='/mimosa/icon.svg')return Response.redirect(u.origin+'/mimosa/icon-192.png',302);
 if(path==='/mimosa/manifest.webmanifest')return serve(MANIFEST,'application/manifest+json');
 if(path.startsWith('/mimosa/api/')){try{return await handle(request,env,path.slice('/mimosa/api/'.length))}catch(err){return fail('Operazione non riuscita',500)}}
 return env.ASSETS.fetch(request)
